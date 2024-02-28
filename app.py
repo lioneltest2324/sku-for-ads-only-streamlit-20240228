@@ -32,6 +32,11 @@ ads_daily_df = merged_saleprice_to_sku_on_ads_data(ads_daily_df,old_new,'SKU', '
 with st.sidebar:
     selected_range = out_date_range_data(ads_daily_df, 'Date', "自选日期范围")
     compare_selected_range = out_date_range_data(ads_daily_df, 'Date', "对比数据日期范围")
+    start_date = pd.to_datetime(selected_range[0])
+    end_date = pd.to_datetime(selected_range[1])
+    compare_end_date = (start_date - pd.Timedelta(days=1)).strftime('%Y/%m/%d')
+    compare_start_date = (start_date - pd.Timedelta(days=1) - pd.Timedelta(end_date-start_date)).strftime('%Y/%m/%d')
+    st.subheader(f"提示：当前自选日期的上个环比周期为{compare_start_date}—{compare_end_date}")
 # 选择日期范围内的数据
 ads_daily_df['Date'] = pd.to_datetime(ads_daily_df['Date'])
 # 处理普通选择日期范围内的数据
@@ -104,4 +109,4 @@ remove_category_3_summary_df['ads value增长值'] = remove_category_3_summary_d
 remove_category_3_summary_df= remove_category_3_summary_df.rename(columns={'cost_x':'自选日期内花费','cost_y':'对比日期内花费'})
 column_config={"imagelink": st.column_config.ImageColumn(width="small")}
 remove_category_3_summary_df = remove_category_3_summary_df.sort_values(by='自选日期内花费', ascending=False)
-st.dataframe(remove_category_3_summary_df.set_index('SKU'),height=600, width=2400,column_config=column_config)
+st.dataframe(remove_category_3_summary_df.set_index(['SKU','imagelink']),height=600, width=2400,column_config=column_config)
