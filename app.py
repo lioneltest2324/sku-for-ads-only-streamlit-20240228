@@ -20,12 +20,17 @@ def add_custom_cul_proportion_to_df(df,A_COLUMNS,B_COLUMNS,CUSTOM_COLUMNS_NAME):
 ads_daily_df = load_and_process_data(ads_url,0)
 spu_index = load_and_process_data(spu_index_url,455883801)
 old_new = load_and_process_data(spu_index_url,666585210)
+old_new['SKU ID'] = old_new['SKU ID'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
+ads_daily_df['SKU'] = ads_daily_df['SKU'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
+old_new  = old_new.rename(columns={'SKU ID':'SKU'})
+ads_daily_df = ads_daily_df.drop(columns=['customlabel1'])
+ads_daily_df = pd.merge(ads_daily_df,old_new[['SKU','customlabel1']],on=['SKU'], how='left')
 ads_daily_df= process_usfeed_and_hmfeed_sku_on_ads_data(ads_daily_df,'MC ID',569301767,9174985,'SKU')
 ads_daily_df= process_hk_cost_and_value_on_ads_data(ads_daily_df,'Currency','cost','ads value','HKD')
 ads_daily_df = process_old_new_sku_2022_and_2023_on_ads_data(ads_daily_df,'customlabel1')
-ads_daily_df['SKU'] = ads_daily_df['SKU'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
-old_new['SKU ID'] = old_new['SKU ID'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
-old_new  = old_new.rename(columns={'SKU ID':'SKU'})
+
+
+
 ads_daily_df = merged_imagelink_to_sku_on_ads_data(ads_daily_df,old_new,'SKU', 'imagelink')
 ads_daily_df = merged_saleprice_to_sku_on_ads_data(ads_daily_df,old_new,'SKU', 'Sale Price')
 # 日期选择框
@@ -41,6 +46,7 @@ with st.sidebar:
 ads_daily_df['Date'] = pd.to_datetime(ads_daily_df['Date'])
 # 处理普通选择日期范围内的数据
 ads_daily_filtered_date_range_df = create_date_filtered_df(ads_daily_df,'Date',selected_range)
+
 # 日维度数据源下载
 ads_daily_filtered_date_range_output_df = output_groupby_df(ads_daily_filtered_date_range_df,
 ['SKU', 'Date', 'Product Type 1', 'Product Type 2', 'Product Type 3','old_or_new', 'imagelink','Sale Price'],
@@ -69,6 +75,7 @@ download_summary_expander.download_button(
         file_name='汇总SKU数据.csv',
         mime='text/csv',
     )
+
 # 三级类目SKU数据对比
 # 先处理对比数据
 st.subheader('三级类目')
@@ -86,6 +93,7 @@ compare_ads_summary_filtered_date_range_df = output_groupby_df(compare_ads_daily
 ['SKU', 'Product Type 1', 'Product Type 2', 'Product Type 3','old_or_new', 'imagelink','Sale Price'],
 ['impression', 'cost', 'click', 'conversions', 'ads value'], 'sum').reset_index()
 ads_summary_filter_category_3_select_df = ads_summary_filtered_date_range_output_df[ads_summary_filtered_date_range_output_df['Product Type 3'].isin(category_3_options)]
+
 compare_ads_summary_filter_category_3_select_df = compare_ads_summary_filtered_date_range_df[compare_ads_summary_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
 category_3_summary_df = pd.merge(ads_summary_filter_category_3_select_df,compare_ads_summary_filter_category_3_select_df
 [['SKU','impression', 'cost', 'click', 'conversions', 'ads value']],on=['SKU'], how='left')
