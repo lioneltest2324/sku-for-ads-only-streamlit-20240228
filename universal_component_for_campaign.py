@@ -32,6 +32,7 @@ def process_hk_cost_and_value_on_ads_data(df,CURRENCY_COLUMNS,COST_COLUMNS,ADS_V
 @st.cache_data(ttl=2400)
 def process_old_new_sku_2022_and_2023_on_ads_data(df,CUSTOMLABEL_COLUMNS):
     df.loc[df[CUSTOMLABEL_COLUMNS].str.contains('2023', na=False), CUSTOMLABEL_COLUMNS] = '2023新品'
+    df.loc[df[CUSTOMLABEL_COLUMNS].str.contains('2024', na=False), CUSTOMLABEL_COLUMNS] = '2024新品'
     df.loc[df[CUSTOMLABEL_COLUMNS].str.contains('2022', na=False) | df[CUSTOMLABEL_COLUMNS].isna(), CUSTOMLABEL_COLUMNS] = '2022老品'
     df = df.rename(columns={CUSTOMLABEL_COLUMNS: 'old_or_new'})
     return df
@@ -120,7 +121,7 @@ def create_dynamic_column_setting(raw_select_df, avoid_list, image_list,progress
             if raw_select_df[column].empty:
                 max_value = 1
             else:
-                max_value = float(raw_select_df[column].max())
+             max_value = float(raw_select_df[column].max())
             column_config[column] = st.column_config.ProgressColumn(
                 format='%.2f',
                 min_value=0,
