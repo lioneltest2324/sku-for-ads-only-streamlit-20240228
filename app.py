@@ -22,10 +22,11 @@ spu_index = load_and_process_data(spu_index_url,455883801)
 old_new = load_and_process_data(spu_index_url,666585210)
 old_new['SKU ID'] = old_new['SKU ID'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
 ads_daily_df['SKU'] = ads_daily_df['SKU'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
+ads_daily_df= process_usfeed_and_hmfeed_sku_on_ads_data(ads_daily_df,'MC ID',569301767,9174985,'SKU')
 old_new  = old_new.rename(columns={'SKU ID':'SKU'})
 ads_daily_df = ads_daily_df.drop(columns=['customlabel1'])
 ads_daily_df = pd.merge(ads_daily_df,old_new[['SKU','customlabel1']],on=['SKU'], how='left')
-ads_daily_df= process_usfeed_and_hmfeed_sku_on_ads_data(ads_daily_df,'MC ID',569301767,9174985,'SKU')
+
 ads_daily_df= process_hk_cost_and_value_on_ads_data(ads_daily_df,'Currency','cost','ads value','HKD')
 ads_daily_df = process_old_new_sku_2022_and_2023_on_ads_data(ads_daily_df,'customlabel1')
 
