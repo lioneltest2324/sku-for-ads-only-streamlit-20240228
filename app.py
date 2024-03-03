@@ -162,6 +162,7 @@ st.text(f"自选日期三级类目adsvalue总和为：{round(ads_value_sum,2)},�
 st.text(f"自选日期三级类目conversion总和为：{round(conversion_sum,2)},对比日期三级类目conversion总和为：{round(compare_conversion_sum,2)}")
 st.text(f"自选日期三级类目aov为：{round(ads_value_sum/conversion_sum,2)},对比日期三级类目aov总和为：{round(compare_ads_value_sum/compare_conversion_sum,2)}")
 st.text("增长值为0的特殊情况:对比日期范围内的数据为0或无数据")
+st.subheader(f"{selected_range[0]}至{selected_range[1]}对比{compare_selected_range[0]}至{compare_selected_range[1]}")
 format_dict = {
     'cost增长值':'{0:.2%}','CPC增长值':'{0:.2%}','impression增长值':'{0:.2%}','转化次数增长值':'{0:.2%}','花费占比增长值':'{0:.2%}','ads value占比增长值':'{0:.2%}',
     'CTR增长值':'{0:.2%}','自选日期CTR':'{0:.2%}','对比日期CTR':'{0:.2%}','ads value增长值':'{0:.2%}','ads ROI增长值':'{0:.2%}','click增长值':'{0:.2%}','自选日期花费占比':'{0:.2%}',
