@@ -5,3 +5,4 @@ st_gsheets_connection==0.0.3
 st_pages==0.4.5
 streamlit==1.29.0
 streamlit_tags==1.2.8
+matplotlib==3.8.3
