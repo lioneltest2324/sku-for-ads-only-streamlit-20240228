@@ -25,11 +25,16 @@ def add_custom_cul_single_proportion_to_df(df,A_COLUMNS,B_COLUMNS,CUSTOM_COLUMNS
     return df
 
 ads_daily_df = load_and_process_data(ads_url,0)
+
+sensor_data = load_and_process_data(ads_url,1408314368)
 spu_index = load_and_process_data(spu_index_url,455883801)
 old_new = load_and_process_data(spu_index_url,666585210)
+
 ads_daily_df= process_usfeed_and_hmfeed_sku_on_ads_data(ads_daily_df,'MC ID',569301767,9174985,'SKU')
 old_new['SKU ID'] = old_new['SKU ID'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
 ads_daily_df['SKU'] = ads_daily_df['SKU'].str.strip().str.replace('\n', '').replace('\t', '').str.upper()
+sensor_data  = sensor_data.rename(columns={'日期':'Date','三级类目':'Product Type 3','GMV':'神策三级类目GMV'})
+sensor_data['Product Type 3'] = sensor_data['Product Type 3'].str.lower()
 
 old_new  = old_new.rename(columns={'SKU ID':'SKU'})
 ads_daily_df = ads_daily_df.drop(columns=['customlabel1'])
@@ -49,8 +54,21 @@ with st.sidebar:
     st.subheader(f"提示：当前自选日期的上个环比周期为{compare_start_date}—{compare_end_date}")
 # 选择日期范围内的数据
 ads_daily_df['Date'] = pd.to_datetime(ads_daily_df['Date'])
+sensor_data['Date'] = pd.to_datetime(sensor_data['Date'])
 # 处理普通选择日期范围内的数据
 ads_daily_filtered_date_range_df = create_date_filtered_df(ads_daily_df,'Date',selected_range)
+# 根据日期处理神策三级类目GMV日维度表
+sensor_daily_filtered_date_range_df = create_date_filtered_df(sensor_data,'Date',selected_range)
+# 根据神策三级类目GMV日维度表做汇总表
+sensor_summary_filtered_date_range_df = output_groupby_df(sensor_daily_filtered_date_range_df,
+['Product Type 3'],['神策三级类目GMV'], 'sum').reset_index()
+# 根据日期处理神策三级类目GMV日维度表(对比)
+compare_sensor_daily_filtered_date_range_df = create_date_filtered_df(sensor_data,'Date',compare_selected_range)
+# 根据神策三级类目GMV日维度表做汇总表(对比)
+compare_sensor_summary_filtered_date_range_df = output_groupby_df(compare_sensor_daily_filtered_date_range_df,
+['Product Type 3'],['神策三级类目GMV'], 'sum').reset_index()
+
+
 
 # 日维度数据源下载
 ads_daily_filtered_date_range_output_df = output_groupby_df(ads_daily_filtered_date_range_df,
@@ -84,7 +102,7 @@ download_summary_expander.download_button(
     )
 # 三级类目SKU数据对比
 # 先处理对比数据
-st.subheader('三级类目')
+st.subheader('三级类目对比数据')
 unique_category_3 = ads_daily_df['Product Type 3'].unique()
 category_3_options = st.multiselect(
     '选择三级类目',
@@ -97,22 +115,33 @@ compare_ads_daily_filtered_date_range_df = output_groupby_df(compare_ads_daily_f
 compare_ads_summary_filtered_date_range_df = output_groupby_df(compare_ads_daily_filtered_date_range_df,
 ['SKU', 'Product Type 1', 'Product Type 2', 'Product Type 3','old_or_new', 'imagelink','Sale Price'],
 ['impression', 'cost', 'click', 'conversions', 'ads value'], 'sum').reset_index()
-# 根据选项做三级类目筛选日维度表
+# 根据选项做三级类目筛选日维度表(日维度底表)
 ads_daily_filter_category_3_select_df = ads_daily_filtered_date_range_df[ads_daily_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
 compare_ads_daily_filter_category_3_select_df = compare_ads_daily_filtered_date_range_df[compare_ads_daily_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
-# 三级类目日维度花费趋势表
+# 三级类目日维度花费趋势表(图表专用)
 ads_daily_filter_category_3_trend_df = output_groupby_df(ads_daily_filter_category_3_select_df,['Date'],['cost'], 'sum').reset_index()
 ads_daily_filter_category_3_trend_df['Date'] = ads_daily_filter_category_3_trend_df['Date'].dt.strftime('%Y-%m-%d')
-# 三级类目日维度花费对比趋势表
+# 三级类目日维度花费对比趋势表(图表专用)
 compare_ads_daily_filter_category_3_trend_df = output_groupby_df(compare_ads_daily_filter_category_3_select_df,['Date'],['cost'], 'sum').reset_index()
 compare_ads_daily_filter_category_3_trend_df['Date'] = compare_ads_daily_filter_category_3_trend_df['Date'].dt.strftime('%Y-%m-%d')
-# 根据选项做三级类目筛选SKU表
+# 根据选项做三级类目筛选SKU表(汇总表)
+sensor_summary_filter_category_3_select_df = sensor_summary_filtered_date_range_df[sensor_summary_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
+compare_sensor_summary_filter_category_3_select_df = compare_sensor_summary_filtered_date_range_df[compare_sensor_summary_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
+
 ads_summary_filter_category_3_select_df = ads_summary_filtered_date_range_output_df[ads_summary_filtered_date_range_output_df['Product Type 3'].isin(category_3_options)]
 compare_ads_summary_filter_category_3_select_df = compare_ads_summary_filtered_date_range_df[compare_ads_summary_filtered_date_range_df['Product Type 3'].isin(category_3_options)]
 category_3_summary_df = pd.merge(ads_summary_filter_category_3_select_df,compare_ads_summary_filter_category_3_select_df
 [['SKU','impression', 'cost', 'click', 'conversions', 'ads value']],on=['SKU'], how='left')
+category_3_summary_df = pd.merge(category_3_summary_df,sensor_summary_filter_category_3_select_df
+[['Product Type 3','神策三级类目GMV']],on=['Product Type 3'], how='left')
+category_3_summary_df = pd.merge(category_3_summary_df,compare_sensor_summary_filter_category_3_select_df
+[['Product Type 3','神策三级类目GMV']],on=['Product Type 3'], how='left')
+category_3_summary_df = category_3_summary_df.rename(columns={'神策三级类目GMV_x':'自选日期该三级类目神策GMV'})
+category_3_summary_df = category_3_summary_df.rename(columns={'神策三级类目GMV_y':'对比日期该三级类目神策GMV'})
 
 cost_sum = category_3_summary_df['cost_x'].sum()
+sensor_sum = category_3_summary_df['自选日期该三级类目神策GMV'].iloc[0]
+compare_sensor_sum = category_3_summary_df['对比日期该三级类目神策GMV'].iloc[0]
 compare_cost_sum = category_3_summary_df['cost_y'].sum()
 ads_value_sum = category_3_summary_df['ads value_x'].sum()
 compare_ads_value_sum = category_3_summary_df['ads value_y'].sum()
@@ -126,6 +155,8 @@ category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'clic
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'click_y', 'impression_y', '对比日期CTR')
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'conversions_x', 'click_x', '自选日期CVR')
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'conversions_y', 'click_y', '对比日期CVR')
+category_3_summary_df['自选日期该三级类目神策ROI'] = sensor_sum/cost_sum
+category_3_summary_df['对比日期该三级类目神策ROI'] = compare_sensor_sum/compare_cost_sum
 category_3_summary_df['自选日期内该三级类目平均ads-ROI'] = ads_value_sum/cost_sum
 category_3_summary_df['cost_sum'] = cost_sum
 category_3_summary_df['compare_cost_sum'] = compare_cost_sum
@@ -151,7 +182,7 @@ columns=[ 'Product Type 1', 'Product Type 2', 'Product Type 3','impression_x','i
 remove_category_3_summary_df= remove_category_3_summary_df.rename(columns={'cost_x':'自选日期花费','cost_y':'对比日期花费','ads value_x':'自选日期ads value','ads value_y':'对比日期ads value'})
 
 remove_category_3_summary_df = remove_category_3_summary_df.sort_values(by='自选日期花费', ascending=False)
-campaign_select_options = st.multiselect(
+category_3_compare_select_options = st.multiselect(
     '选择数据维度',
     remove_category_3_summary_df.columns,
     ['SKU', 'imagelink', 'old_or_new', '自选日期花费', '对比日期花费','自选日期ads value','对比日期ads value','cost增长值','ads value增长值',
@@ -167,7 +198,8 @@ format_dict = {
     'cost增长值':'{0:.2%}','CPC增长值':'{0:.2%}','impression增长值':'{0:.2%}','转化次数增长值':'{0:.2%}','花费占比增长值':'{0:.2%}','ads value占比增长值':'{0:.2%}',
     'CTR增长值':'{0:.2%}','自选日期CTR':'{0:.2%}','对比日期CTR':'{0:.2%}','ads value增长值':'{0:.2%}','ads ROI增长值':'{0:.2%}','click增长值':'{0:.2%}','自选日期花费占比':'{0:.2%}',
     '对比日期花费占比':'{0:.2%}','自选日期ads value占比':'{0:.2%}','对比日期ads value占比':'{0:.2%}','自选日期CVR':'{0:.2%}','对比日期CVR':'{0:.2%}','CVR增长值':'{0:.2%}',
-    'Sale Price':'{0:.2f}','自选日期花费':'{0:.2f}','对比日期花费':'{0:.2f}','自选日期CPC':'{0:.2f}','对比日期CPC':'{0:.2f}','自选日期ads value':'{0:.2f}','对比日期ads value':'{0:.2f}'
+    'Sale Price':'{0:.2f}','自选日期花费':'{0:.2f}','对比日期花费':'{0:.2f}','自选日期CPC':'{0:.2f}','对比日期CPC':'{0:.2f}','自选日期ads value':'{0:.2f}','对比日期ads value':'{0:.2f}',
+    '自选日期该三级类目神策ROI':'{0:.2f}','对比日期该三级类目神策ROI':'{0:.2f}'
 }
 column_config={"imagelink": st.column_config.ImageColumn(width="small")}
 style_mapping = {
@@ -181,17 +213,17 @@ style_mapping = {
 }
 # 根据options创建新的style_mapping_match
 style_mapping_match = {}
-for option in campaign_select_options:
+for option in category_3_compare_select_options:
     if option in style_mapping:
         style_mapping_match[option] = style_mapping[option]
 
-styled_df = remove_category_3_summary_df[campaign_select_options].style\
+styled_df_compare = remove_category_3_summary_df[category_3_compare_select_options].style\
     # .set_index(['SKU','imagelink'])
 
 for column, cmap in style_mapping_match.items():
-    styled_df = styled_df.background_gradient(subset=[column], cmap=cmap)
+    styled_df_compare = styled_df_compare.background_gradient(subset=[column], cmap=cmap)
 
-st.dataframe(styled_df.format(format_dict),height=800, width=2600,column_config=column_config,hide_index=True)
+st.dataframe(styled_df_compare.format(format_dict),height=800, width=2600,column_config=column_config,hide_index=True)
 with st.container():
     col1, col2= st.columns(2)
     with col1:
@@ -201,3 +233,19 @@ with st.container():
       st.subheader('对比日期三级类目花费趋势')
       st.line_chart(compare_ads_daily_filter_category_3_trend_df,x="Date", y="cost")
 
+st.subheader('三级类目自选时间范围数据')
+category_3_select_options = st.multiselect(
+    '数据维度',
+    remove_category_3_summary_df.columns,
+    ['SKU', 'imagelink', 'old_or_new', '自选日期花费', '自选日期ads value','自选日期ads-ROI','自选日期内该三级类目平均ads-ROI','自选日期该三级类目神策ROI','自选日期CPC',
+     '自选日期CTR','自选日期CVR','自选日期花费占比','自选日期ads value占比']
+)
+style_mapping_match_select = {}
+for option in category_3_select_options:
+    if option in style_mapping:
+        style_mapping_match_select[option] = style_mapping[option]
+styled_df = remove_category_3_summary_df[category_3_select_options].style
+for column, cmap in style_mapping_match_select.items():
+    styled_df = styled_df.background_gradient(subset=[column], cmap=cmap)
+
+st.dataframe(styled_df.format(format_dict),height=800, width=2600,column_config=column_config,hide_index=True)
