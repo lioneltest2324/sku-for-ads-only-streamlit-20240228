@@ -140,8 +140,9 @@ category_3_summary_df = category_3_summary_df.rename(columns={'神策三级类�
 category_3_summary_df = category_3_summary_df.rename(columns={'神策三级类目GMV_y':'对比日期该三级类目神策GMV'})
 
 cost_sum = category_3_summary_df['cost_x'].sum()
-sensor_sum = category_3_summary_df['自选日期该三级类目神策GMV'].iloc[0]
-compare_sensor_sum = category_3_summary_df['对比日期该三级类目神策GMV'].iloc[0]
+if category_3_options:
+    sensor_sum = category_3_summary_df['自选日期该三级类目神策GMV'].iloc[0]
+    compare_sensor_sum = category_3_summary_df['对比日期该三级类目神策GMV'].iloc[0]
 compare_cost_sum = category_3_summary_df['cost_y'].sum()
 ads_value_sum = category_3_summary_df['ads value_x'].sum()
 compare_ads_value_sum = category_3_summary_df['ads value_y'].sum()
@@ -155,8 +156,9 @@ category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'clic
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'click_y', 'impression_y', '对比日期CTR')
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'conversions_x', 'click_x', '自选日期CVR')
 category_3_summary_df = add_custom_proportion_to_df(category_3_summary_df, 'conversions_y', 'click_y', '对比日期CVR')
-category_3_summary_df['自选日期该三级类目神策ROI'] = sensor_sum/cost_sum
-category_3_summary_df['对比日期该三级类目神策ROI'] = compare_sensor_sum/compare_cost_sum
+if category_3_options:
+    category_3_summary_df['自选日期该三级类目神策ROI'] = sensor_sum/cost_sum
+    category_3_summary_df['对比日期该三级类目神策ROI'] = compare_sensor_sum/compare_cost_sum
 category_3_summary_df['自选日期内该三级类目平均ads-ROI'] = ads_value_sum/cost_sum
 category_3_summary_df['cost_sum'] = cost_sum
 category_3_summary_df['compare_cost_sum'] = compare_cost_sum
@@ -199,7 +201,7 @@ format_dict = {
     'CTR增长值':'{0:.2%}','自选日期CTR':'{0:.2%}','对比日期CTR':'{0:.2%}','ads value增长值':'{0:.2%}','ads ROI增长值':'{0:.2%}','click增长值':'{0:.2%}','自选日期花费占比':'{0:.2%}',
     '对比日期花费占比':'{0:.2%}','自选日期ads value占比':'{0:.2%}','对比日期ads value占比':'{0:.2%}','自选日期CVR':'{0:.2%}','对比日期CVR':'{0:.2%}','CVR增长值':'{0:.2%}',
     'Sale Price':'{0:.2f}','自选日期花费':'{0:.2f}','对比日期花费':'{0:.2f}','自选日期CPC':'{0:.2f}','对比日期CPC':'{0:.2f}','自选日期ads value':'{0:.2f}','对比日期ads value':'{0:.2f}',
-    '自选日期该三级类目神策ROI':'{0:.2f}','对比日期该三级类目神策ROI':'{0:.2f}'
+    '自选日期该三级类目神策ROI':'{0:.2f}','对比日期该三级类目神策ROI':'{0:.2f}','自选日期ads-ROI':'{0:.2f}','对比日期ads-ROI':'{0:.2f}','自选日期内该三级类目平均ads-ROI':'{0:.2f}'
 }
 column_config={"imagelink": st.column_config.ImageColumn(width="small")}
 style_mapping = {
